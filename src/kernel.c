@@ -36,17 +36,17 @@ it writes to a different column, whereas terminal_putchar takes x and y
 and doesn't keep track of column or rows */
 void terminal_writechar(char c, char color)             
 {
-    if (c == '\n')                                 /* Implementing a new line to print out a new string */
+    if (c == '\n')                                 // Implementing a new line to print out a new string 
     {
         terminal_row += 1;
         terminal_col = 0;
         return;
     }
     terminal_putchar(terminal_col, terminal_row, c, color); 
-    terminal_col += 1;                             /* Ensures the color is incrimented by one */
-    if (terminal_col >= VGA_WIDTH)                 /* If we get back to the row we have to loop back */
+    terminal_col += 1;                             // Ensures the color is incrimented by one 
+    if (terminal_col >= VGA_WIDTH)                 // If we get back to the row we have to loop back 
     {
-        terminal_col = 0;                          /* If we get to the end of the line we start on new line */
+        terminal_col = 0;                          // If we get to the end of the line we start on new line 
         terminal_row += 1;                         
     }
 
@@ -75,7 +75,7 @@ void terminal_initialize()
 
 }
 
-/* Creating size len function to count char in a string in order to print it out */
+// Creating size len function to count char in a string in order to print it out 
 size_t strlen(const char* str)
 {
     size_t len = 0;
@@ -89,7 +89,7 @@ size_t strlen(const char* str)
 
 
 
-/* Our print routine to print string to terminal */
+// Our print routine to print string to terminal 
 void print(const char* str)
 {
     size_t len = strlen(str);
@@ -101,9 +101,6 @@ void print(const char* str)
 
 }
 
-
-
-
 void kernel_main()
 {
  /* video_mem[0] = 0x0341; because of endianess 
@@ -111,6 +108,6 @@ we flip the last two digits so instead of 0x4103 we have 0x0341
 basically will store 0x41 in one byte and 0x03 in second byte.
 But we do not want to be workng with hex numbers! */    
     terminal_initialize();
-    print("Welcome to Narch\nThis is operation system is devoted to you!");
+    print("Welcome to NARCH\nThis OS is devoted to you!");
 }
 
