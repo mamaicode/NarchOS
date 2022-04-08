@@ -8,5 +8,5 @@ void* memset(void* ptr, int c, size_t size)
     {
         c_ptr[i] = (char) c;
     }
-    return ptr;                 // Returns pointer, said so on the C specification provided
+    return ptr;                             // Returns pointer, said so on the C specification provided
 }
