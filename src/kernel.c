@@ -2,7 +2,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include "idt/idt.h"
-
+#include "io/io.h"
 /* Creating pointer to an absolute memory 
 using unsigned int as each vide_mem is 1 byte */
 uint16_t* video_mem = 0;
@@ -91,8 +91,11 @@ void print(const char* str)
 void kernel_main()
 {
     terminal_initialize();
-    print("Hello world!\ntest");
+    print("Welcome to NARCHOS!\nThis OS is dedicated to you");
 
     // Initialize the interrupt descriptor table
     idt_init();
+
+    outb(0x60, 0xff);
+    
 }
