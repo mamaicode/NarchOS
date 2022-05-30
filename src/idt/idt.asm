@@ -4,7 +4,7 @@ extern int21h_handler
 extern no_interrupt_handler
 
 global int21h                   ; Exporting the function
-global no_interrupt                         ; Exporting the function
+global no_interrupt             ; Exporting the function
 global idt_load                 ; So it exports the symbol
 
 idt_load:                       ; Writing assembly that's compatible with C

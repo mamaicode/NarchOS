@@ -47,14 +47,15 @@ void idt_init()
     memset(idt_descriptors, 0, sizeof(idt_descriptors));        // Creates bunch of null descriptors for us
     idtr_descriptor.limit = sizeof(idt_descriptors) -1;         // Setting up the IDTR
     idtr_descriptor.base = (uint32_t) idt_descriptors;
-
-    idt_set(0, idt_zero);                                       // Calling a function as a test
-    idt_set(0x20, int21h);
-
+ 
     for (int i = 0; i < NARCHOS_TOTAL_INTERRUPTS; i++)
     {
         idt_set(i, no_interrupt);
     }
+
+    idt_set(0, idt_zero);                                       // Calling a function as a test
+    idt_set(0x20, int21h);
+
     // Load the interrupt descriptor table
     idt_load(&idtr_descriptor);
 }
