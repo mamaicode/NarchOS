@@ -30,7 +30,9 @@ _start:
 
     mov al, 00000001b                   ; Putting the PIC in x86 mode 
     out 0x21, al                        
-    ; End remap of the master PIC
+                                        ; End remap of the master PIC
+
+    sti                                 ; Enable interrupts
 
     call kernel_main
 
