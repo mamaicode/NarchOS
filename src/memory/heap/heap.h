@@ -20,7 +20,7 @@ struct heap_table
 {
     // Creating a pointer here to a place where our entries will reside
     HEAP_BLOCK_TABLE_ENTRY* entries;
-    size_t total;                                       // Helps to understand how many entries we have, 100mB stored in the 'total' variable
+    size_t total;                                       // Helps to understand how many entries we have, 100MB stored in the 'total' variable
 };
 
 // Implementing a structure for our heap
