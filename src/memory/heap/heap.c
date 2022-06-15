@@ -65,13 +65,47 @@ out:
     return res;
 } 
 
-// Creating the heap malloc funcion
-void* heap_malloc(size_t size)
+static uint32_t heap_align_value_to_upper(uint32_t val)
 {
-    return 0;
+    if ((val % NARCHOS_HEAP_BLOCK_SIZE) == 0)                                           // Check for alignment                                                                         
+    {
+        return val;
+    }
+
+    val = (val - (val % NARCHOS_HEAP_BLOCK_SIZE));
+    val += NARCHOS_HEAP_BLOCK_SIZE;
+    return val;
 }
 
-void* heap_free(void* ptr)
+// malloc function that takes number of blocks to allocate rather than size
+void* heap_malloc_blocks(struct heap* heap, uint32_t total_blocks)
+{
+    void* address = 0;                                                                 // Find the blocks that we need and return the pointer in data pool
+
+    int start_block = heap_get_start_block(heap, total_blocks);
+    if (start_block < 0)
+    {
+        goto out;
+    }
+
+    address = heap_block_to_address(heap, start_block);                                // Converting block to an address
+
+    // Mark the blocks as taken so that the next malloc doesn't return the same address allowing our data to overwrite our data
+    heap_mark_blocks_taken(heap, start_block, total_blocks);
+out:
+    return address;
+}
+
+// Creating the heap malloc function
+void* heap_malloc(struct heap* heap, size_t size)
+{
+    size_t aligned_size = heap_align_value_to_upper(size);                             // Gives us the new size
+    uint32_t total_blocks = aligned_size / NARCHOS_HEAP_BLOCK_SIZE;                    // Calculate how many blocks to allocate in our entry table to represent the size the caller is asking
+    return heap_malloc_blocks(heap, total_blocks);
+}
+
+// Creating memory freeing function
+void* heap_free(struct heap* heap, void* ptr)
 {
     return 0;
 }
