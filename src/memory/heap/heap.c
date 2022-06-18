@@ -96,6 +96,56 @@ out:
     return address;
 }
 
+// Extracting the entry type, lowest four bits
+static int heap_get_entry_type(HEAP_BLOCK_TABLE_ENTRY entry)
+{
+    return entry & 0x0f;                                                                // Returning the last four bits
+}
+
+// Heap get_start_block function not optimized for speed yet
+int heap_get_start_block(struct heap* heap, uint32_t total_blocks)
+{
+    // Access to our entry table, no we can reference it to the table variable
+    struct heap_table* table = heap->table;
+    int bc = 0;                                                                         // Stores the current block we are on
+    int bs = -1;                                                                        // Stores the block start
+
+    // Goes through our entire entry table and looks for a free block
+    for (size_t i = 0; i < table->total; i++)
+    {
+        // If the entry we reside on is free then we have to reset the state 
+        if (heap_get_entry_type(table->entries[i]) != HEAP_BLOCK_TABLE_ENTRY_FREE)
+        {
+            bc = 0; 
+            bs = -1;
+            continue;
+        }
+
+        // If this is the first block
+        if (bs == -1)
+        {
+            // We know this block is free
+            bs = i;                                                                     // We know our start block
+        }
+
+        bc++;
+
+        // We found a start block with enough series
+        if (bc == total_blocks)
+        {
+            break;
+        }
+    }
+
+    if (bs == -1)
+    {
+        return -ENOMEM;                                                                // We are out of memory           
+    }
+
+    return bs;
+}
+
+
 // Creating the heap malloc function
 void* heap_malloc(struct heap* heap, size_t size)
 {
