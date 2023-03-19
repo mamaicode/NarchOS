@@ -1,4 +1,4 @@
-# Welcome to NarchOS, dedicated OS for you
+# Welcome to NarchOS, we are dedicated to you
 NarchOS is a multitasking operating system and kernel with an interactive shell
 
 # How to use NarchOS
