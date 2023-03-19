@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include "idt/idt.h"
 #include "io/io.h"
+#include "memory/heap/kheap.h"
 /* Creating pointer to an absolute memory 
 using unsigned int as each vide_mem is 1 byte */
 uint16_t* video_mem = 0;
@@ -93,7 +94,9 @@ void kernel_main()
     terminal_initialize();
     print("Welcome to NARCHOS!\nThis OS is dedicated to you");
 
+    // Initialize the heap
+    kheap_init();
+
     // Initialize the interrupt descriptor table
     idt_init();
-
 }

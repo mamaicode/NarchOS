@@ -1,37 +1,34 @@
 #ifndef HEAP_H
 #define HEAP_H
-#include <stdint.h> 
 #include "config.h"
+#include <stdint.h>
 #include <stddef.h>
 
-// First four bits that represent the type and show if the entry is free or taken
 #define HEAP_BLOCK_TABLE_ENTRY_TAKEN 0x01
 #define HEAP_BLOCK_TABLE_ENTRY_FREE 0x00
 
-// Implementing bitmask for two topmost bits, which determine if we have more blocks next to us or if it's the first block
 #define HEAP_BLOCK_HAS_NEXT 0b10000000
-#define HEAP_BLOCK_IS_FERE  0b01000000
+#define HEAP_BLOCK_IS_FIRST  0b01000000
 
-// Making a type to the bitmask
-typedef unsigned char HEAP_BLOCK_TABLE_ENTRY;           // 8 bits in the entry table, one entry represents 8 bits
 
-// Creating the heap entry table
+typedef unsigned char HEAP_BLOCK_TABLE_ENTRY;
+
 struct heap_table
 {
-    // Creating a pointer here to a place where our entries will reside
     HEAP_BLOCK_TABLE_ENTRY* entries;
-    size_t total;                                       // Helps to understand how many entries we have, 100MB stored in the 'total' variable
+    size_t total;
 };
 
-// Implementing a structure for our heap
+
 struct heap
 {
-    struct heap_table* table;                           // Pointer to our heap table 
-    void* saddr;                                        // Start address of the heap data pool
+    struct heap_table* table;
+
+    // Start address of the heap data pool
+    void* saddr;
 };
 
 int heap_create(struct heap* heap, void* ptr, void* end, struct heap_table* table);
-void* heap_malloc(size_t size);
-void* heap_free(void* ptr);
-
+void* heap_malloc(struct heap* heap, size_t size);
+void heap_free(struct heap* heap, void* ptr);
 #endif

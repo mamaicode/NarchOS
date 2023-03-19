@@ -4,119 +4,82 @@
 #include "memory/memory.h"
 #include <stdbool.h>
 
-
-// Validate the heap table
 static int heap_validate_table(void* ptr, void* end, struct heap_table* table)
 {
-    int res = 0;                                                                        // Validate that the pointer provided and the end address is correct for the table given    
+    int res = 0;
 
-    size_t table_size = (size_t)(end - ptr);                                            // Table size
-    size_t total_blocks = table_size / NARCHOS_HEAP_BLOCK_SIZE;                         // Total blocks in our heap 
+    size_t table_size = (size_t)(end - ptr);
+    size_t total_blocks = table_size / NARCHOS_HEAP_BLOCK_SIZE;
     if (table->total != total_blocks)
     {
-        res = -EINVARG;                                                                 // If table total does not equal total blocks then we have a miscalculation so we return invalid argument
+        res = -EINVARG;
         goto out;
     }
 
-out:   
-    return res;                                                                                       
-
+out:
+    return res;
 }
 
 static bool heap_validate_alignment(void* ptr)
 {
-    return ((unsigned int)ptr % NARCHOS_HEAP_BLOCK_SIZE) == 0;                         // Return true if there is an alignment
+    return ((unsigned int)ptr % NARCHOS_HEAP_BLOCK_SIZE) == 0;
 }
 
-// A function for creating a heap
-int heap_create(struct heap* heap, void* ptr, void* end, struct heap_table* table)     // Accept heap, pointer to heap data pool, pointer to the end of our heap and heap table
+int heap_create(struct heap* heap, void* ptr, void* end, struct heap_table* table)
 {
-    /* Idea is that if we want to create a heap, 
-    we call heap_create, pass in the uninitialized heap pointer 
-    initialize it, pass in where we want the heap to start and end at 
-    and provide a valide heap table one that we filled in. 
-    Then we use the 'end' variable to determine if the table is valid or not.
-    0 represents no error, negative value represents the error code */
-    
     int res = 0;
-    res = -EIO;
 
-    if (!heap_validate_alignment(ptr) || heap_validate_alignment(end))                 // It has to be aligned for us to work with the address
+    if (!heap_validate_alignment(ptr) || !heap_validate_alignment(end))
     {
-        res = -EINVARG;                                                                // Validating alignment of heap, return EINVARG in case alignment is bad
+        res = -EINVARG;
         goto out;
     }
 
-    memset(heap, 0, sizeof(struct heap));                                              // Initialize the whole heap to 0
-    heap->saddr = ptr;                                                                 // Set our heap start address to the pointer provided
-    heap->table = table;                                                               // Set the heap table in our heap object
+    memset(heap, 0, sizeof(struct heap));
+    heap->saddr = ptr;
+    heap->table = table;
 
-    res = heap_validate_table(ptr, end, table);                                        // Validating the table itself
+    res = heap_validate_table(ptr, end, table);
     if (res < 0)
     {
         goto out;
     }
 
-    // Initializing all blocks in the heap entry table to 0
-    size_t table_size = sizeof(HEAP_BLOCK_TABLE_ENTRY) * table->total;                 // Mark every uninitialized byte in the entry table to 0
-    memset(table->entries, HEAP_BLOCK_TABLE_ENTRY_FREE, table_size);                   
+    size_t table_size = sizeof(HEAP_BLOCK_TABLE_ENTRY) * table->total;
+    memset(table->entries, HEAP_BLOCK_TABLE_ENTRY_FREE, table_size);
 
 out:
     return res;
-} 
+}
 
 static uint32_t heap_align_value_to_upper(uint32_t val)
 {
-    if ((val % NARCHOS_HEAP_BLOCK_SIZE) == 0)                                           // Check for alignment                                                                         
+    if ((val % NARCHOS_HEAP_BLOCK_SIZE) == 0)
     {
         return val;
     }
 
-    val = (val - (val % NARCHOS_HEAP_BLOCK_SIZE));
+    val = (val - ( val % NARCHOS_HEAP_BLOCK_SIZE));
     val += NARCHOS_HEAP_BLOCK_SIZE;
     return val;
 }
 
-// malloc function that takes number of blocks to allocate rather than size
-void* heap_malloc_blocks(struct heap* heap, uint32_t total_blocks)
-{
-    void* address = 0;                                                                 // Find the blocks that we need and return the pointer in data pool
-
-    int start_block = heap_get_start_block(heap, total_blocks);
-    if (start_block < 0)
-    {
-        goto out;
-    }
-
-    address = heap_block_to_address(heap, start_block);                                // Converting block to an address
-
-    // Mark the blocks as taken so that the next malloc doesn't return the same address allowing our data to overwrite our data
-    heap_mark_blocks_taken(heap, start_block, total_blocks);
-out:
-    return address;
-}
-
-// Extracting the entry type, lowest four bits
 static int heap_get_entry_type(HEAP_BLOCK_TABLE_ENTRY entry)
 {
-    return entry & 0x0f;                                                                // Returning the last four bits
+    return entry & 0x0f;
 }
 
-// Heap get_start_block function not optimized for speed yet
 int heap_get_start_block(struct heap* heap, uint32_t total_blocks)
 {
-    // Access to our entry table, no we can reference it to the table variable
     struct heap_table* table = heap->table;
-    int bc = 0;                                                                         // Stores the current block we are on
-    int bs = -1;                                                                        // Stores the block start
+    int bc = 0;
+    int bs = -1;
 
-    // Goes through our entire entry table and looks for a free block
     for (size_t i = 0; i < table->total; i++)
     {
-        // If the entry we reside on is free then we have to reset the state 
         if (heap_get_entry_type(table->entries[i]) != HEAP_BLOCK_TABLE_ENTRY_FREE)
         {
-            bc = 0; 
+            bc = 0;
             bs = -1;
             continue;
         }
@@ -124,13 +87,9 @@ int heap_get_start_block(struct heap* heap, uint32_t total_blocks)
         // If this is the first block
         if (bs == -1)
         {
-            // We know this block is free
-            bs = i;                                                                     // We know our start block
+            bs = i;
         }
-
         bc++;
-
-        // We found a start block with enough series
         if (bc == total_blocks)
         {
             break;
@@ -139,23 +98,85 @@ int heap_get_start_block(struct heap* heap, uint32_t total_blocks)
 
     if (bs == -1)
     {
-        return -ENOMEM;                                                                // We are out of memory           
+        return -ENOMEM;
     }
-
+    
     return bs;
+
 }
 
+void* heap_block_to_address(struct heap* heap, int block)
+{
+    return heap->saddr + (block * NARCHOS_HEAP_BLOCK_SIZE);
+}
 
-// Creating the heap malloc function
+void heap_mark_blocks_taken(struct heap* heap, int start_block, int total_blocks)
+{
+    int end_block = (start_block + total_blocks)-1;
+    
+    HEAP_BLOCK_TABLE_ENTRY entry = HEAP_BLOCK_TABLE_ENTRY_TAKEN | HEAP_BLOCK_IS_FIRST;
+    if (total_blocks > 1)
+    {
+        entry |= HEAP_BLOCK_HAS_NEXT;
+    }
+
+    for (int i = start_block; i <= end_block; i++)
+    {
+        heap->table->entries[i] = entry;
+        entry = HEAP_BLOCK_TABLE_ENTRY_TAKEN;
+        if (i != end_block -1)
+        {
+            entry |= HEAP_BLOCK_HAS_NEXT;
+        }
+    }
+}
+
+void* heap_malloc_blocks(struct heap* heap, uint32_t total_blocks)
+{
+    void* address = 0;
+
+    int start_block = heap_get_start_block(heap, total_blocks);
+    if (start_block < 0)
+    {
+        goto out;
+    }
+
+    address = heap_block_to_address(heap, start_block);
+
+    // Mark the blocks as taken
+    heap_mark_blocks_taken(heap, start_block, total_blocks);
+
+out:
+    return address;
+}
+
+void heap_mark_blocks_free(struct heap* heap, int starting_block)
+{
+    struct heap_table* table = heap->table;
+    for (int i = starting_block; i < (int)table->total; i++)
+    {
+        HEAP_BLOCK_TABLE_ENTRY entry = table->entries[i];
+        table->entries[i] = HEAP_BLOCK_TABLE_ENTRY_FREE;
+        if (!(entry & HEAP_BLOCK_HAS_NEXT))
+        {
+            break;
+        }
+    }
+}
+
+int heap_address_to_block(struct heap* heap, void* address)
+{
+    return ((int)(address - heap->saddr)) / NARCHOS_HEAP_BLOCK_SIZE;
+}
+
 void* heap_malloc(struct heap* heap, size_t size)
 {
-    size_t aligned_size = heap_align_value_to_upper(size);                             // Gives us the new size
-    uint32_t total_blocks = aligned_size / NARCHOS_HEAP_BLOCK_SIZE;                    // Calculate how many blocks to allocate in our entry table to represent the size the caller is asking
+    size_t aligned_size = heap_align_value_to_upper(size);
+    uint32_t total_blocks = aligned_size / NARCHOS_HEAP_BLOCK_SIZE;
     return heap_malloc_blocks(heap, total_blocks);
 }
 
-// Creating memory freeing function
-void* heap_free(struct heap* heap, void* ptr)
+void heap_free(struct heap* heap, void* ptr)
 {
-    return 0;
+    heap_mark_blocks_free(heap, heap_address_to_block(heap, ptr));
 }

@@ -38,7 +38,7 @@ all: ./bin/boot.bin ./bin/kernel.bin
 
 ./build/memory/heap/kheap.o: ./src/memory/heap/kheap.c
 	i686-elf-gcc $(INCLUDES) -I./src/memory/heap $(FLAGS) -std=gnu99 -c ./src/memory/heap/kheap.c -o ./build/memory/heap/kheap.o
-	
+
 clean:
 	rm -rf ./bin/boot.bin
 	rm -rf ./bin/kernel.bin
